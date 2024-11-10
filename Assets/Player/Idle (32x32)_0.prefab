@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8937091938386925124}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: GroundCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -48,7 +48,7 @@ GameObject:
   - component: {fileID: -4700417356730767553}
   - component: {fileID: 1886571351620119918}
   - component: {fileID: 2997015712393636883}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Idle (32x32)_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,7 +135,7 @@ BoxCollider2D:
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 852c9334a58818343a20b51dcf3eb897, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
