@@ -3,56 +3,37 @@ using UnityEngine;
 
 public class CustomNetworkManager : MonoBehaviour
 {
-    public GameObject playerPrefab;
+    public int connectedPlayers = 0; // Tracks the number of connected players
 
     private void Start()
     {
-        // Subscribe to events when the network starts
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        NetworkManager.Singleton.OnServerStarted += OnServerStarted;
+        if (NetworkManager.Singleton != null)
+        {
+            // Subscribe to the OnClientConnectedCallback event
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        }
     }
 
-    private void OnServerStarted()
+    private void OnDestroy()
     {
-        // Only execute this if we're a dedicated server (not a host)
-        if (NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsHost)
+        if (NetworkManager.Singleton != null)
         {
-            Debug.Log("Server started as a dedicated server.");
+            // Unsubscribe from the events to avoid memory leaks
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
     }
 
     private void OnClientConnected(ulong clientId)
     {
-        // Only spawn the player for clients, including the host's client instance
-        if (NetworkManager.Singleton.IsServer)
-        {
-            // Check if this is the local client ID for the host
-            if (clientId == NetworkManager.Singleton.LocalClientId && NetworkManager.Singleton.IsHost)
-            {
-                Debug.Log("Spawning player for the host client.");
-            }
-            else
-            {
-                Debug.Log($"Spawning player for client {clientId}.");
-            }
-            SpawnPlayer(clientId);
-        }
+        connectedPlayers++; // Increment the counter
+        Debug.Log($"Player connected. Total players: {connectedPlayers}");
     }
 
-    private void SpawnPlayer(ulong clientId)
+    private void OnClientDisconnected(ulong clientId)
     {
-        // Instantiate the player object and assign ownership to the connected client
-        GameObject playerInstance = Instantiate(playerPrefab);
-        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
-    }
-
-    private void OnDestroy()
-    {
-        // Unsubscribe from events to prevent memory leaks
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-            NetworkManager.Singleton.OnServerStarted -= OnServerStarted;
-        }
+        connectedPlayers--; // Decrement the counter
+        Debug.Log($"Player disconnected. Total players: {connectedPlayers}");
     }
 }
