@@ -3,15 +3,22 @@ using UnityEngine;
 
 public class CustomNetworkManager : MonoBehaviour
 {
-    public int connectedPlayers = 0; // Tracks the number of connected players
+    // Synchronized NetworkVariable to track the number of connected players
+    public NetworkVariable<int> connectedPlayers = new NetworkVariable<int>(
+    NetworkVariableReadPermission.Everyone, // All clients can read this value
+    NetworkVariableWritePermission.Server   // Only the server can modify this value
+);
 
     private void Start()
     {
         if (NetworkManager.Singleton != null)
         {
-            // Subscribe to the OnClientConnectedCallback event
+            // Subscribe to connection and disconnection events
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+
+            // Subscribe to NetworkVariable changes
+            connectedPlayers.OnValueChanged += OnConnectedPlayersChanged;
         }
     }
 
@@ -19,21 +26,36 @@ public class CustomNetworkManager : MonoBehaviour
     {
         if (NetworkManager.Singleton != null)
         {
-            // Unsubscribe from the events to avoid memory leaks
+            // Unsubscribe from events
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+
+            // Unsubscribe from NetworkVariable changes
+            connectedPlayers.OnValueChanged -= OnConnectedPlayersChanged;
         }
     }
 
     private void OnClientConnected(ulong clientId)
     {
-        connectedPlayers++; // Increment the counter
-        Debug.Log($"Player connected. Total players: {connectedPlayers}");
+        if (NetworkManager.Singleton.IsServer) // Ensure only the server modifies the value
+        {
+            connectedPlayers.Value++; // Increment the count
+            Debug.Log($"Player connected. Total players: {connectedPlayers.Value}");
+        }
     }
 
     private void OnClientDisconnected(ulong clientId)
     {
-        connectedPlayers--; // Decrement the counter
-        Debug.Log($"Player disconnected. Total players: {connectedPlayers}");
+        if (NetworkManager.Singleton.IsServer) // Ensure only the server modifies the value
+        {
+            connectedPlayers.Value--; // Decrement the count
+            Debug.Log($"Player disconnected. Total players: {connectedPlayers.Value}");
+        }
+    }
+
+    private void OnConnectedPlayersChanged(int previousValue, int newValue)
+    {
+        // Triggered when the connectedPlayers variable changes
+        Debug.Log($"Connected players updated: {newValue}");
     }
 }
